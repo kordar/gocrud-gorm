@@ -10,6 +10,7 @@ func InitExec() {
 	gocrud.AddExecute("EQ", EQ, "gorm")
 	gocrud.AddExecute("!=", NEQ, "gorm")
 	gocrud.AddExecute("<>", NEQ, "gorm")
+	gocrud.AddExecute("NEQ", NEQ, "gorm")
 	gocrud.AddExecute("LT", LT, "gorm")
 	gocrud.AddExecute("<", LT, "gorm")
 	gocrud.AddExecute("LE", LE, "gorm")
