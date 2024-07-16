@@ -1,14 +1,170 @@
 package gocrud_gorm_test
 
 import (
+	"context"
+	"fmt"
 	"github.com/kordar/gocrud"
+	gocrud_gorm "github.com/kordar/gocrud-gorm"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"testing"
+	"time"
 )
 
-func TestCREATE(t *testing.T) {
-	formBody := gocrud.NewFormBody("gorm")
-	_, err := formBody.Create(nil, "", nil)
+type SysAdmin struct {
+	ID         uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
+	Phone      string    `gorm:"type:varchar(32);unique;not null" json:"phone"`
+	Avatar     string    `gorm:"type:varchar(255)" json:"avatar"`
+	Username   string    `gorm:"type:varchar(64);unique;not null" json:"username"`
+	Password   string    `gorm:"type:varchar(255)" json:"password"`
+	Status     int       `gorm:"default:0" json:"status"`
+	Type       int       `gorm:"default:0" json:"type"`
+	Salt       string    `gorm:"type:varchar(32)" json:"salt"`
+	Version    int       `gorm:"default:0" json:"version"`
+	Deleted    int       `gorm:"default:0" json:"deleted"`
+	CreateTime time.Time `gorm:"type:datetime" json:"create_time"`
+	UpdateTime time.Time `gorm:"type:datetime" json:"update_time"`
+}
+
+func (sysAdmin *SysAdmin) TableName() string {
+	return "sys_admin"
+}
+
+func db() *gorm.DB {
+	dsn := "root:yunpengai.306@tcp(43.139.223.7:3307)/goadmin?charset=utf8&parseTime=true"
+	mysqlConfig := gorm.Config{}
+	mysqlConfig.Logger = logger.Default.LogMode(logger.Info)
+	ins, err := gorm.Open(mysql.Open(dsn), &mysqlConfig)
 	if err != nil {
-		t.Error(err)
+		panic(err)
 	}
+	return ins
+}
+
+func TestCreate(t *testing.T) {
+	gocrud_gorm.InitExec()
+	d := db()
+	body := gocrud.NewFormBody[*gorm.DB, context.Context]("gorm", context.Background())
+	body.Object = map[string]interface{}{
+		"phone":       "cccc234",
+		"username":    "4444",
+		"password":    "123456",
+		"create_time": time.Now(),
+		"update_time": time.Now(),
+	}
+	model, _ := body.Create(&SysAdmin{}, d, nil)
+	fmt.Printf("------------%v\n", model)
+}
+
+func TestFormBody_Query(t *testing.T) {
+	gocrud_gorm.InitExec()
+	d := db()
+	body := gocrud.NewFormBody[*gorm.DB, context.Context]("gorm", context.Background())
+	body.Conditions = []gocrud.Condition{
+		{"", "phone", "", "13389452031", "", "EQ", false},
+	}
+	body.Object = map[string]string{"aaa": "bbb", "ccc": "ddd"}
+	tx := body.Query(d, nil)
+	list := make([]SysAdmin, 0)
+	tx.Find(&list)
+	fmt.Printf("============%v\n", list)
+	mm := map[string]string{}
+	err := body.Unmarshal(&mm)
+	fmt.Printf("----------%v---%v\n", err, mm)
+}
+
+func TestFormBody_QuerySafe(t *testing.T) {
+	gocrud_gorm.InitExec()
+	d := db()
+	body := gocrud.NewFormBody[*gorm.DB, context.Context]("gorm", context.Background())
+	body.Conditions = []gocrud.Condition{
+		//{"", "phone", "", "13389452031", "", "EQ", false},
+	}
+	tx, err := body.QuerySafe(d, nil)
+	list := make([]SysAdmin, 0)
+	if err == nil {
+		tx.Find(&list)
+	}
+	fmt.Printf("============%v=====%v\n", list, err)
+}
+
+func TestFormBody_Update(t *testing.T) {
+	gocrud_gorm.InitExec()
+	d := db()
+	body := gocrud.NewFormBody[*gorm.DB, context.Context]("gorm", context.Background())
+	body.Conditions = []gocrud.Condition{
+		{"", "phone", "", "13389452031", "", "EQ", false},
+	}
+	sysAdmin := SysAdmin{ID: 0, Username: "demo0001"}
+	a, err := body.Update(&sysAdmin, d, nil)
+	if err != nil {
+		fmt.Println("---------", err)
+	} else {
+		fmt.Println("00000000000", a.(*SysAdmin).ID)
+	}
+
+}
+
+func TestFormBody_Save(t *testing.T) {
+	gocrud_gorm.InitExec()
+	d := db()
+	body := gocrud.NewFormBody[*gorm.DB, context.Context]("gorm", context.Background())
+	sysAdmin := SysAdmin{Username: "demo0077400"}
+	a, err := body.Save(&sysAdmin, d, nil)
+	if err != nil {
+		fmt.Println("---------", err)
+	} else {
+		fmt.Println("00000000000", a.(*SysAdmin).ID)
+	}
+
+}
+
+func TestFormBody_Editor(t *testing.T) {
+	gocrud_gorm.InitExec()
+	d := db()
+	body := gocrud.NewEditorBody[*gorm.DB, context.Context]("gorm", context.Background())
+	body.Conditions = []gocrud.Condition{
+		{"phone", "", "", "werewfe", "", "EQ", true},
+	}
+	body.Editors = []gocrud.Editor{
+		{"", "", "username", "AAA", ""},
+	}
+	err := body.Updates(&SysAdmin{}, d, nil)
+	if err != nil {
+		fmt.Println("---------", err)
+	} else {
+		fmt.Println("00000000000")
+	}
+
+}
+
+func TestFormBody_Delete(t *testing.T) {
+	gocrud_gorm.InitExec()
+	d := db()
+	body := gocrud.NewRemoveBody[*gorm.DB, context.Context]("gorm", context.Background())
+	body.Conditions = []gocrud.Condition{
+		//{"phone", "", "", "werewfe", "", "EQ", true},
+	}
+	err := body.Delete(&SysAdmin{}, d, nil)
+	if err != nil {
+		fmt.Println("---------", err)
+	} else {
+		fmt.Println("00000000000")
+	}
+
+}
+
+func TestFormBody_Page(t *testing.T) {
+	gocrud_gorm.InitExec()
+	d := db()
+	body := gocrud.NewSearchBody[*gorm.DB, context.Context]("gorm", context.Background())
+	body.Conditions = []gocrud.Condition{
+		//{"phone", "", "", "werewfe", "", "EQ", true},
+	}
+	body.Page = 2
+	tx, _ := body.Paginate(d, nil)
+	var list []SysAdmin
+	tx.Find(&list)
+	fmt.Printf("-----%+v", list)
 }

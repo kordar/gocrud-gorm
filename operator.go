@@ -35,5 +35,5 @@ func DELETE(db interface{}, field string, value interface{}, value2 ...interface
 func PAGE(db interface{}, field string, value interface{}, value2 ...interface{}) interface{} {
 	offset := cast.ToInt(value)
 	pageSize := cast.ToInt(value2[0])
-	return db.(*gorm.DB).Offset(offset).Limit(pageSize).Error
+	return db.(*gorm.DB).Offset(offset).Limit(pageSize)
 }
