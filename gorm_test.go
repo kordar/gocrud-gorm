@@ -94,7 +94,7 @@ func TestFormBody_Update(t *testing.T) {
 	d := db()
 	body := gocrud.NewFormBody[*gorm.DB, context.Context]("gorm", context.Background())
 	body.Conditions = []gocrud.Condition{
-		{"", "phone", "", "13389452031", "", "EQ", false},
+		{"", "phone", "", "133******", "", "EQ", false},
 	}
 	sysAdmin := SysAdmin{ID: 0, Username: "demo0001"}
 	a, err := body.Update(&sysAdmin, d, nil)
@@ -182,7 +182,7 @@ func (t TestService[T, C]) Search(body gocrud.SearchBody[T, C]) gocrud.SearchVO 
 	d := db()
 	sysAdmin := SysAdmin{}
 	var tx *gorm.DB = body.Query(d, nil)
-	tx.Where("phone = ?", "13389452031").First(&sysAdmin)
+	tx.Where("phone = ?", "133*****031").First(&sysAdmin)
 	fmt.Printf("==========%+v", sysAdmin)
 	return gocrud.SearchVO{}
 }

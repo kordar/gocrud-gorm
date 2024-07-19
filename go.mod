@@ -3,7 +3,7 @@ module github.com/kordar/gocrud-gorm
 go 1.18
 
 require (
-	github.com/kordar/gocrud v1.1.1
+	github.com/kordar/gocrud v1.1.2
 	github.com/spf13/cast v1.3.1
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.11
