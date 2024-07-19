@@ -168,3 +168,27 @@ func TestFormBody_Page(t *testing.T) {
 	tx.Find(&list)
 	fmt.Printf("-----%+v", list)
 }
+
+type TestService[T *gorm.DB, C context.Context] struct {
+	*gocrud.CommonResourceService[T, C]
+}
+
+func (t TestService[T, C]) ResourceName() string {
+	return "test"
+}
+
+func (t TestService[T, C]) Search(body gocrud.SearchBody[T, C]) gocrud.SearchVO {
+	gocrud_gorm.InitExec()
+	d := db()
+	sysAdmin := SysAdmin{}
+	var tx *gorm.DB = body.Query(d, nil)
+	tx.Where("phone = ?", "13389452031").First(&sysAdmin)
+	fmt.Printf("==========%+v", sysAdmin)
+	return gocrud.SearchVO{}
+}
+
+func TestTestService(t *testing.T) {
+	tt := TestService[*gorm.DB, context.Context]{}
+	body := gocrud.NewSearchBody[*gorm.DB, context.Context]("gorm", context.Background())
+	tt.Search(body)
+}
