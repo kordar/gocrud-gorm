@@ -47,8 +47,8 @@ func TestCreate(t *testing.T) {
 	d := db()
 	body := gocrud.NewFormBody("gorm", context.Background())
 	body.Object = map[string]interface{}{
-		"phone":       "cccc234",
-		"username":    "4444",
+		"phone":       "112233",
+		"username":    "AAAAAAA",
 		"password":    "123456",
 		"create_time": time.Now(),
 		"update_time": time.Now(),
@@ -63,7 +63,7 @@ func TestFormBody_Query(t *testing.T) {
 	d := db()
 	body := gocrud.NewFormBody("gorm", context.Background())
 	body.Conditions = []gocrud.Condition{
-		{"", "phone", "", "13389452031", "", "EQ", false},
+		{"", "phone", "", "1122", "", "LIKE", false},
 	}
 	body.Object = map[string]string{"aaa": "bbb", "ccc": "ddd"}
 	formBody := gocrud_gorm.NewGormFormBody(body)
