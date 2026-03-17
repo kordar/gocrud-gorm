@@ -3,13 +3,15 @@ package gocrud_gorm_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/kordar/gocrud"
 	gocrud_gorm "github.com/kordar/gocrud-gorm"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"testing"
-	"time"
 )
 
 type SysAdmin struct {
@@ -31,8 +33,12 @@ func (sysAdmin *SysAdmin) TableName() string {
 	return "sys_admin"
 }
 
-func db() *gorm.DB {
-	dsn := "root:yunpengai.306@tcp(43.139.223.7:3307)/goadmin?charset=utf8&parseTime=true"
+func db(t *testing.T) *gorm.DB {
+	t.Helper()
+	dsn := os.Getenv("GOCRUD_GORM_TEST_DSN")
+	if dsn == "" {
+		t.Skip("GOCRUD_GORM_TEST_DSN is empty")
+	}
 	mysqlConfig := gorm.Config{}
 	mysqlConfig.Logger = logger.Default.LogMode(logger.Info)
 	ins, err := gorm.Open(mysql.Open(dsn), &mysqlConfig)
@@ -44,7 +50,7 @@ func db() *gorm.DB {
 
 func TestCreate(t *testing.T) {
 	gocrud_gorm.InitExec()
-	d := db()
+	d := db(t)
 	body := gocrud.NewFormBody("gorm", context.Background())
 	body.Object = map[string]interface{}{
 		"phone":       "112233",
@@ -60,7 +66,7 @@ func TestCreate(t *testing.T) {
 
 func TestFormBody_Query(t *testing.T) {
 	gocrud_gorm.InitExec()
-	d := db()
+	d := db(t)
 	body := gocrud.NewFormBody("gorm", context.Background())
 	body.Conditions = []gocrud.Condition{
 		{"", "phone", "", "1122", "", "LIKE", false},
@@ -77,7 +83,7 @@ func TestFormBody_Query(t *testing.T) {
 
 func TestFormBody_QuerySafe(t *testing.T) {
 	gocrud_gorm.InitExec()
-	d := db()
+	d := db(t)
 	body := gocrud.NewFormBody("gorm", context.Background())
 	body.Conditions = []gocrud.Condition{
 		{"", "phone", "", "13389452031", "", "EQ", false},
@@ -93,7 +99,7 @@ func TestFormBody_QuerySafe(t *testing.T) {
 
 func TestFormBody_Update(t *testing.T) {
 	gocrud_gorm.InitExec()
-	d := db()
+	d := db(t)
 	body := gocrud.NewFormBody("gorm", context.Background())
 	body.Conditions = []gocrud.Condition{
 		{"", "phone", "", "133******", "", "EQ", false},
@@ -110,7 +116,7 @@ func TestFormBody_Update(t *testing.T) {
 
 func TestFormBody_Save(t *testing.T) {
 	gocrud_gorm.InitExec()
-	d := db()
+	d := db(t)
 	body := gocrud.NewFormBody("gorm", context.Background())
 	sysAdmin := SysAdmin{Username: "demo0077400"}
 	formBody := gocrud_gorm.NewGormFormBody(body)
@@ -125,7 +131,7 @@ func TestFormBody_Save(t *testing.T) {
 
 func TestFormBody_Editor(t *testing.T) {
 	gocrud_gorm.InitExec()
-	d := db()
+	d := db(t)
 	body := gocrud.NewEditorBody("gorm", context.Background())
 	body.Conditions = []gocrud.Condition{
 		{"phone", "", "", "werewfe", "", "EQ", true},
@@ -145,7 +151,7 @@ func TestFormBody_Editor(t *testing.T) {
 
 func TestFormBody_Delete(t *testing.T) {
 	gocrud_gorm.InitExec()
-	d := db()
+	d := db(t)
 	body := gocrud.NewRemoveBody("gorm", context.Background())
 	body.Conditions = []gocrud.Condition{
 		{"phone", "", "", "werewfe", "", "EQ", true},
@@ -162,7 +168,7 @@ func TestFormBody_Delete(t *testing.T) {
 
 func TestFormBody_Page(t *testing.T) {
 	gocrud_gorm.InitExec()
-	d := db()
+	d := db(t)
 	body := gocrud.NewSearchBody("gorm", context.Background())
 	body.Conditions = []gocrud.Condition{
 		//{"phone", "", "", "werewfe", "", "EQ", true},
@@ -177,6 +183,7 @@ func TestFormBody_Page(t *testing.T) {
 
 type TestService struct {
 	*gocrud.CommonResourceService
+	DB *gorm.DB
 }
 
 func (t TestService) ResourceName() string {
@@ -185,7 +192,10 @@ func (t TestService) ResourceName() string {
 
 func (t TestService) Search(body gocrud.SearchBody) gocrud.SearchVO {
 	gocrud_gorm.InitExec()
-	d := db()
+	d := t.DB
+	if d == nil {
+		return gocrud.SearchVO{}
+	}
 	sysAdmin := SysAdmin{}
 	searchBody := gocrud_gorm.NewGormSearchBody(body)
 	searchBody.GormQuery(d, nil).Where("phone = ?", "133*****031").First(&sysAdmin)
@@ -194,7 +204,7 @@ func (t TestService) Search(body gocrud.SearchBody) gocrud.SearchVO {
 }
 
 func TestTestService(t *testing.T) {
-	tt := TestService{}
+	tt := TestService{DB: db(t)}
 	body := gocrud.NewSearchBody("gorm", context.Background())
 	tt.Search(body)
 }
